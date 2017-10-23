@@ -54,7 +54,15 @@ void Reader::read()
         }
     }
 
+    m_Result.clear();
     for (auto it = words_counter.constBegin(); it != words_counter.constEnd(); ++it)
         if (it.value() == 1)
-            ;//qDebug() << it.key() << "\n";
+            m_Result.push_back(it.key());
+
+    emit completed();
+}
+
+QVector<QString> Reader::getResult() const
+{
+    return m_Result;
 }

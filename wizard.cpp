@@ -9,21 +9,18 @@
 #include <QtWidgets/QProgressBar>
 #include <QtCore/QTextStream>
 #include <QtCore/QThread>
-#include <QtCore/QMap>
 #include <QtCore/QString>
+#include <QtCore/QVector>
 #include <QtCore/QFile>
 #include <QtCore/QDebug>
 
 
 ReaderWizard::ReaderWizard():
-        m_Thread(this)
+    m_Thread(this)
 {
     m_Wizard.setPage(FIRST_PAGE, createFirstPage());
-    m_Wizard.button(QWizard::NextButton)->setEnabled(false);
     m_Wizard.setPage(SELECT_PAGE, createFilePage());
     m_Wizard.setPage(PROCESSING_PAGE, createProcessingPage());
-
-
 
     m_Wizard.show();
 }
@@ -52,7 +49,7 @@ QWizardPage* ReaderWizard::createFirstPage()
 
 QWizardPage* ReaderWizard::createFilePage()
 {
-    auto page = new WizardPage;
+    auto page = new Page;
     page->setTitle("Select file");
     page->setButtonText(QWizard::CancelButton, "Exit");
     page->setButtonText(QWizard::NextButton, "Start");
@@ -79,7 +76,7 @@ QWizardPage* ReaderWizard::createFilePage()
 
 QWizardPage* ReaderWizard::createProcessingPage()
 {
-    auto page = new WizardPage;
+    auto page = new Page;
     page->setTitle("Scanning");
     page->setButtonText(QWizard::CancelButton, "Exit");
 
@@ -94,9 +91,16 @@ QWizardPage* ReaderWizard::createProcessingPage()
             if (m_Reader == nullptr)
                 m_Reader = new Reader(m_Path);
 
-            connect(&m_Thread, &QThread::started, m_Reader, &Reader::read);
+            // added "progress" and "result" handlers
             connect(m_Reader, &Reader::progressChanged, m_ProgressBar, &QProgressBar::setValue);
+            connect(m_Reader, &Reader::completed, this, [&]() {
+                m_Wizard.button(QWizard::FinishButton)->setEnabled(true);
+                for (const auto& word : m_Reader->getResult())
+                    qDebug() << word << "\n";
+            });
 
+            // start processing
+            connect(&m_Thread, &QThread::started, m_Reader, &Reader::read);
             m_Reader->moveToThread(&m_Thread);
             m_Thread.start();
         }

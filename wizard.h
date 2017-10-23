@@ -8,6 +8,7 @@
 #include <QtCore/QThread>
 #include <QtCore/QMap>
 #include <QtCore/QString>
+#include <QtCore/QVector>
 
 #include "reader.h"
 
@@ -15,23 +16,6 @@ class ReaderWizard : public QWidget
 {
     Q_OBJECT
 public:
-    class WizardPage : public QWizardPage
-    {
-    public:
-        // check "correct file" condition
-        bool isComplete() const override
-        {
-            return m_Complete;
-        }
-
-        void setComplete()
-        {
-            m_Complete = true;
-        }
-    private:
-        bool m_Complete = false;
-    };
-
     ReaderWizard();
 
     virtual ~ReaderWizard();
@@ -42,6 +26,11 @@ private:
 
     QWizardPage* createProcessingPage();
 private:
+    struct Page : QWizardPage
+    {
+        bool isComplete() const override { return false; } // TODO disable Next button
+    };
+
     enum PAGES { FIRST_PAGE, SELECT_PAGE, PROCESSING_PAGE };
 
     QWizard m_Wizard;
